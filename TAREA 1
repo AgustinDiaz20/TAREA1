@@ -1,0 +1,406 @@
+//Agregamos las librerias necesarias
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+
+using namespace std;
+
+int maxpreguntas = 100;
+
+class Pregunta {
+protected:
+    string asignatura;
+    string enunciado;
+    string respuestacorrecta;
+    string nivel_tax;
+    int duracion;
+
+public:
+    Pregunta(string, string, string, string, int);
+    virtual ~Pregunta();
+
+    void setasignatura(string);
+    void setenunciado(string);
+    void setrespuestacorrecta(string);
+    void setnivel_tax(string);
+    void setduracion(int);
+
+    string getasignatura();
+    string getenunciado();
+    string getrespuestacorrecta();
+    string getnivel_tax();
+    int getduracion();
+
+    virtual void pedirinfo();
+    virtual void mostrarinfo();
+    virtual string serializar();
+};
+
+Pregunta::Pregunta(string _asignatura, string _enunciado, string _respuestacorrecta, string _nivel_tax, int _duracion)
+    : asignatura(_asignatura), enunciado(_enunciado), respuestacorrecta(_respuestacorrecta), nivel_tax(_nivel_tax), duracion(_duracion) {}
+
+Pregunta::~Pregunta() {}
+
+void Pregunta::setasignatura(string _asignatura) { asignatura = _asignatura; }
+void Pregunta::setenunciado(string _enunciado) { enunciado = _enunciado; }
+void Pregunta::setrespuestacorrecta(string _respuestacorrecta) { respuestacorrecta = _respuestacorrecta; }
+void Pregunta::setnivel_tax(string _nivel_tax) { nivel_tax = _nivel_tax; }
+void Pregunta::setduracion(int _duracion) { duracion = _duracion; }
+
+string Pregunta::getasignatura() { return asignatura; }
+string Pregunta::getenunciado() { return enunciado; }
+string Pregunta::getrespuestacorrecta() { return respuestacorrecta; }
+string Pregunta::getnivel_tax() { return nivel_tax; }
+int Pregunta::getduracion() { return duracion; }
+
+// Solicita al usuario los datos para una pregunta
+void Pregunta::pedirinfo() {
+    cout << "Ingrese la asignatura: ";
+    getline(cin, asignatura);
+    cout << "Ingrese el enunciado: ";
+    getline(cin, enunciado);
+    cout << "Ingrese la respuesta correcta: ";
+    getline(cin, respuestacorrecta);
+    cout << "Ingrese el nivel taxonomico: ";
+    getline(cin, nivel_tax);
+    cout << "Ingrese duracion aproximada: ";
+    cin >> duracion;
+    cin.ignore();
+}
+// Mostramos la informacion de la pregunta
+void Pregunta::mostrarinfo() {
+    cout << "Asignatura: " << asignatura << endl;
+    cout << "Enunciado: " << enunciado << endl;
+    cout << "Respuesta: " << respuestacorrecta << endl;
+    cout << "Nivel Taxonomico: " << nivel_tax << endl;
+    cout << "Duracion estimada: " << duracion << " min" << endl;
+}
+
+// Devuelve los datos en un string para guardar el archivo
+string Pregunta::serializar() {
+    return asignatura + "|" + enunciado + "|" + respuestacorrecta + "|" + nivel_tax + "|" + to_string(duracion);
+}
+
+class Preguntamulti : public Pregunta {// Creamos clase Pregunta Multiple
+private:
+    string tipo;
+
+public:
+    Preguntamulti(string, string, string, string);
+    void settipo(string);
+    string gettipo();
+    void pedirinfo() override;
+    void mostrarinfo() override;
+    string serializar() override;
+};
+
+Preguntamulti::Preguntamulti(string _asignatura, string _enunciado, string _respuestacorrecta, string _tipo)
+    : Pregunta(_asignatura, _enunciado, _respuestacorrecta, "", 0), tipo(_tipo) {}
+
+void Preguntamulti::settipo(string _tipo) { tipo = _tipo; }
+string Preguntamulti::gettipo() { return tipo; }
+
+// Pide que se ingrese tipo de pregunta (opcion multiple)
+void Preguntamulti::pedirinfo() {
+    Pregunta::pedirinfo();
+    cout << "Ingrese el tipo de pregunta (OM): ";
+    getline(cin, tipo);
+}
+
+void Preguntamulti::mostrarinfo() {
+    Pregunta::mostrarinfo();
+    cout << "Tipo de pregunta: " << tipo << endl;
+}
+
+string Preguntamulti::serializar() {
+    return tipo + "|" + Pregunta::serializar();
+}
+
+
+
+class Preguntavefa : public Pregunta {// Creamos clase Pregunta Verdadero/falso
+private:
+    string tipo;
+
+public:
+    Preguntavefa(string, string, string, string);
+    void settipo(string);
+    string gettipo();
+    void pedirinfo() override;
+    void mostrarinfo() override;
+    string serializar() override;
+};
+
+Preguntavefa::Preguntavefa(string _asignatura, string _enunciado, string _respuestacorrecta, string _tipo)
+    : Pregunta(_asignatura, _enunciado, _respuestacorrecta, "", 0), tipo(_tipo) {}
+
+void Preguntavefa::settipo(string _tipo) { tipo = _tipo; }
+string Preguntavefa::gettipo() { return tipo; }
+
+// Pide que se ingrese tipo de pregunta (Verdadero/Falso)
+void Preguntavefa::pedirinfo() {
+    Pregunta::pedirinfo();
+    cout << "Ingrese el tipo de pregunta (VF): ";
+    getline(cin, tipo);
+}
+
+void Preguntavefa::mostrarinfo() {
+    Pregunta::mostrarinfo();
+    cout << "Tipo de pregunta: " << tipo << endl;
+}
+
+string Preguntavefa::serializar() {
+    return tipo + "|" + Pregunta::serializar();
+}
+
+// ------------------------ Gestor de Preguntas -------------------------
+
+class GestorPreguntas {
+private:
+    Pregunta** preguntas;
+    int cantidadpreguntas;
+    int capacidad;
+
+public:
+    GestorPreguntas(int capacidad);
+    ~GestorPreguntas();
+    void agregarpregunta(Pregunta* p);
+    void eliminarpregunta(int index);
+    void editarpregunta(int index);
+    void mostrarpreguntas() const;
+    void buscarpornivel(const string& nivel_tax);
+    void generarEvaluacionAvanzada(const string& asignatura, const string& nivel_tax, int cantidad);
+    void cargarpreguntasArchivo(const string& archivo);
+};
+
+GestorPreguntas::GestorPreguntas(int _capacidad) : cantidadpreguntas(0), capacidad(_capacidad) {
+    preguntas = new Pregunta * [_capacidad];
+}
+
+GestorPreguntas::~GestorPreguntas() {
+    for (int i = 0; i < cantidadpreguntas; i++) {
+        delete preguntas[i];
+    }
+    delete[] preguntas;
+}
+// Agrega unna pregunta al arreglo y la guarda en el archivo
+void GestorPreguntas::agregarpregunta(Pregunta* p) {
+    if (cantidadpreguntas < capacidad) {
+        preguntas[cantidadpreguntas++] = p;
+
+        // Abrir el archivo en modo de agregar (append)
+        ofstream file("preguntas.txt", ios::app);  // Usamos 'ios::app' para añadir al final del archivo
+        if (file.is_open()) {
+            file << p->serializar() << endl;  // Guardar la pregunta en el archivo
+            file.close();  // Cerrar el archivo después de escribir
+        } else {
+            cout << "No se pudo abrir el archivo para agregar la pregunta." << endl;
+        }
+    } else {
+        cout << "No se pueden agregar más preguntas, capacidad alcanzada." << endl;
+    }
+}
+
+// Elimina una pregunta del arreglo
+void GestorPreguntas::eliminarpregunta(int index) {
+    if (index >= 0 && index < cantidadpreguntas) {
+        // Eliminar la pregunta de la memoria
+        delete preguntas[index];
+
+        // Reorganizar las preguntas en el arreglo
+        for (int i = index; i < cantidadpreguntas - 1; i++) {
+            preguntas[i] = preguntas[i + 1];
+        }
+
+        // Reducir la cantidad de preguntas
+        cantidadpreguntas--;
+
+        // Actualizar el archivo para reflejar los cambios
+        ofstream file("preguntas.txt");  // Abrir el archivo en modo de escritura
+        if (file.is_open()) {
+            for (int i = 0; i < cantidadpreguntas; i++) {
+                file << preguntas[i]->serializar() << endl;  // Guardar las preguntas restantes
+            }
+            file.close(); 
+        } else {
+            cout << "No se pudo abrir el archivo para actualizar." << endl;
+        }
+    }
+}
+//Permite editar una pregunta, pidiendo el indice
+void GestorPreguntas::editarpregunta(int index) {
+    if (index >= 0 && index < cantidadpreguntas) {
+        cout << "Editando la pregunta #" << index << endl;
+        preguntas[index]->pedirinfo();
+        ofstream file("preguntas.txt");
+        for (int i = 0; i < cantidadpreguntas; i++) {
+            file << preguntas[i]->serializar() << endl;
+        }
+        file.close();
+    }
+}
+// Muestra las preguntas registradas
+void GestorPreguntas::mostrarpreguntas() const {
+    for (int i = 0; i < cantidadpreguntas; i++) {
+        cout << "Indice: " << i << endl;
+        preguntas[i]->mostrarinfo();
+        cout << "-----------------" << endl;
+    }
+}
+//Busca y muestra preguntas de acuerdo al nivel tax
+void GestorPreguntas::buscarpornivel(const string& nivel_tax) {
+    for (int i = 0; i < cantidadpreguntas; i++) {
+        if (preguntas[i]->getnivel_tax() == nivel_tax) {
+            preguntas[i]->mostrarinfo();
+            cout << "-----------------" << endl;
+        }
+    }
+}
+//Genera evaluacion con las preguntas guardadas de acuerdo a las condiciones establecidas por el usuario
+void GestorPreguntas::generarEvaluacionAvanzada(const string& asignatura, const string& nivel_tax, int cantidad) {
+    int cont = 0;
+    int duracionTotal = 0;
+
+    for (int i = 0; i < cantidadpreguntas && cont < cantidad; i++) {
+        if (preguntas[i]->getasignatura() == asignatura && preguntas[i]->getnivel_tax() == nivel_tax) {
+            preguntas[i]->mostrarinfo();
+            duracionTotal += preguntas[i]->getduracion();
+            cout << "-----------------" << endl;
+            cont++;
+        }
+    }
+
+    if (cont == 0) {
+        cout << "No se encontraron preguntas que coincidan.\n";
+    } else {
+        cout << "Duracion total estimada: " << duracionTotal << " minutos." << endl;
+    }
+}
+
+void GestorPreguntas::cargarpreguntasArchivo(const string& archivo) {
+    ifstream file(archivo);
+    if (file.is_open()) {
+        string line;
+        while (getline(file, line)) {
+            stringstream ss(line);
+            string tipo, asignatura, enunciado, respuestacorrecta, nivel_tax;
+            int duracion;
+
+            getline(ss, tipo, '|');
+            getline(ss, asignatura, '|');
+            getline(ss, enunciado, '|');
+            getline(ss, respuestacorrecta, '|');
+            getline(ss, nivel_tax, '|');
+            ss >> duracion;
+
+            Pregunta* p = nullptr;
+            if (tipo == "OM") {
+                p = new Preguntamulti(asignatura, enunciado, respuestacorrecta, tipo);
+            } else {
+                p = new Preguntavefa(asignatura, enunciado, respuestacorrecta, tipo);
+            }
+
+            p->setnivelTax(nivel_tax);
+            p->setduracion(duracion);
+            preguntas[cantidadpreguntas++] = p;
+        }
+        file.close();
+    }
+}
+
+// ------------------------ MAIN -------------------------
+
+int main() {
+    GestorPreguntas gestor(100);
+    gestor.cargarpreguntasArchivo("preguntas.txt");
+
+    int opcion;
+    do {
+        cout << "\nMenu de opciones:\n";
+        cout << "1. Agregar pregunta\n";
+        cout << "2. Mostrar preguntas\n";
+        cout << "3. Eliminar pregunta\n";
+        cout << "4. Buscar preguntas por nivel taxonomico\n";
+        cout << "5. Editar pregunta\n";
+        cout << "6. Generar evaluacion avanzada\n";
+        cout << "7. Salir\n";
+        cout << "Seleccione una opcion: ";
+        cin >> opcion;
+        cin.ignore();
+
+        switch (opcion) {
+        case 1: {
+            int tipo;
+            cout << "1. Opcion multiple\n2. Verdadero/Falso\nSeleccione tipo: ";
+            cin >> tipo;
+            cin.ignore();
+
+            string asignatura, enunciado, respuestacorrecta, nivel_tax, tipo_str;
+            int duracion;
+
+            cout << "Asignatura: "; getline(cin, asignatura);
+            cout << "Enunciado: "; getline(cin, enunciado);
+            cout << "Respuesta correcta: "; getline(cin, respuestacorrecta);
+            cout << "Nivel taxonomico: "; getline(cin, nivel_tax);
+            cout << "Duracion estimada: "; cin >> duracion;
+            cin.ignore();
+
+            Pregunta* p = nullptr;
+            if (tipo == 1) {
+                cout << "Tipo (OM): "; getline(cin, tipo_str);
+                p = new Preguntamulti(asignatura, enunciado, respuestacorrecta, tipo_str);
+            } else {
+                p = new Preguntavefa(asignatura, enunciado, respuestacorrecta, "VF");
+            }
+
+            p->setnivelTax(nivel_tax);
+            p->setduracion(duracion);
+            gestor.agregarpregunta(p);
+            break;
+        }
+        case 2:
+            gestor.mostrarpreguntas();
+            break;
+        case 3: {
+            int index;
+            cout << "Indice a eliminar: ";
+            cin >> index;
+            gestor.eliminarpregunta(index);
+            break;
+        }
+        case 4: {
+            string nivel;
+            cout << "Ingrese nivel taxonomico: ";
+            getline(cin, nivel);
+            gestor.buscarpornivel(nivel);
+            break;
+        }
+        case 5: {
+            int index;
+            cout << "Indice a editar: ";
+            cin >> index;
+            cin.ignore();
+            gestor.editarpregunta(index);
+            break;
+        }
+        case 6: {
+            string asignatura, nivel;
+            int cantidad;
+            cout << "Asignatura: "; getline(cin, asignatura);
+            cout << "Nivel taxonomico: "; getline(cin, nivel);
+            cout << "Cantidad de preguntas: "; cin >> cantidad;
+            cin.ignore();
+            gestor.generarEvaluacionAvanzada(asignatura, nivel, cantidad);
+            break;
+        }
+        case 7:
+            cout << "Saliendo...\n";
+            break;
+        default:
+            cout << "Opcion invalida.\n";
+        }
+    } while (opcion != 7);
+
+    return 0;
+}
